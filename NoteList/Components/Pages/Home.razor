@@ -1,0 +1,66 @@
+﻿@page "/"
+
+@* <h1>Hello, world!</h1>
+
+Welcome to your new app. *@
+@using NoteList.Services
+@using NoteList.Models
+@inject NotesService NotesService
+@inject NavigationManager Navigation
+
+<div class="notes-container">
+    <h3 class="title">Lista de Notas</h3>
+    <button class="add-note-btn" @onclick="IrAgregarNota">➕ Agregar Nota</button>
+    @if (notas == null)
+    {
+        <p class="loading-text">Cargando...</p>
+    }
+    else if (!notas.Any())
+    {
+        <p class="empty-text">📌 No hay notas disponibles.</p>
+    }
+    else
+    {
+        <ul class="notes-list">
+            @foreach (var note in notas)
+            {
+                <li class="note-item">
+                    <div class="note-content">
+                        <strong>@note.Title</strong> - @note.Content
+                    </div>
+                    <div class="note-actions">
+                        <button class="action-btn details" @onclick="() => VerDetalles(note.Id)">👀 Detalles</button>
+                        <button class="action-btn edit" @onclick="() => EditarNota(note.Id)">✏️ Editar</button>
+                        <button class="action-btn delete" @onclick="() => EliminarNota(note.Id)">🗑 Eliminar</button>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private List<Notes> notas;
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        notas = await NotesService.GetAllNotesAsync();
+    }
+    private void IrAgregarNota()
+    {
+        Navigation.NavigateTo("/add-note");
+    }
+    private void EditarNota(int id)
+    {
+        Navigation.NavigateTo($"/edit-note/{id}");
+    }
+    private void VerDetalles(int id)
+    {
+        Navigation.NavigateTo($"/note-details/{id}");
+    }
+    private async Task EliminarNota(int id)
+    {
+        await NotesService.DeleteNoteAsync(id);
+        notas = await NotesService.GetAllNotesAsync();
+    }
+}

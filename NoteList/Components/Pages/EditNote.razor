@@ -1,0 +1,49 @@
+﻿@page "/edit-note/{id:int}"
+<link rel="stylesheet" href="css/edit-note.css">
+@using NoteList.Services
+@using NoteList.Models
+@inject NotesService NotesService
+@inject NavigationManager Navigation
+<link rel="stylesheet" href="css/edit-note.css">
+<div class="edit-note-container">
+    <h3 class="title">✏️ Editar Nota</h3>
+    @if (note == null)
+    {
+        <p class="loading-message">Cargando...</p>
+    }
+    else
+    {
+        <form class="note-form">
+            <label for="title">Título:</label>
+            <input type="text" id="title" @bind="note.Title" placeholder="Escribe un título..." />
+            <label for="content">Contenido:</label>
+            <textarea id="content" @bind="note.Content" placeholder="Escribe el contenido..."></textarea>
+            <div class="button-group">
+                <button type="button" class="btn save-btn" @onclick="ActualizarNota">💾 Guardar</button>
+                <button type="button" class="btn cancel-btn" @onclick="Cancelar">❌ Cancelar</button>
+            </div>
+        </form>
+    }
+</div>
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private Notes note;
+    protected override async Task OnInitializedAsync()
+    {
+        note = await NotesService.GetNoteByIdAsync(id);
+    }
+    private async Task ActualizarNota()
+    {
+        if (note != null)
+        {
+            note.LastModifiedDate = DateTime.Now;
+            await NotesService.UpdateNoteAsync(note);
+            Navigation.NavigateTo("/");
+        }
+    }
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
