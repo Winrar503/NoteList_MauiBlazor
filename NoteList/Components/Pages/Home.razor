@@ -1,13 +1,9 @@
-﻿@page "/"
-
-@* <h1>Hello, world!</h1>
-
-Welcome to your new app. *@
+﻿@* @page "/"
 @using NoteList.Services
 @using NoteList.Models
 @inject NotesService NotesService
 @inject NavigationManager Navigation
-
+<link rel="stylesheet" href="css/home.css">
 <div class="notes-container">
     <h3 class="title">Lista de Notas</h3>
     <button class="add-note-btn" @onclick="IrAgregarNota">➕ Agregar Nota</button>
@@ -24,23 +20,51 @@ Welcome to your new app. *@
         <ul class="notes-list">
             @foreach (var note in notas)
             {
-                <li class="note-item">
-                    <div class="note-content">
-                        <strong>@note.Title</strong> - @note.Content
-                    </div>
-                    <div class="note-actions">
-                        <button class="action-btn details" @onclick="() => VerDetalles(note.Id)">👀 Detalles</button>
-                        <button class="action-btn edit" @onclick="() => EditarNota(note.Id)">✏️ Editar</button>
-                        <button class="action-btn delete" @onclick="() => EliminarNota(note.Id)">🗑 Eliminar</button>
+                <li class="card" @onclick="() => VerDetalles(note.Id)">
+                    <h3 class="card__title">@note.Title</h3>
+                    <p class="card__content">@MostrarResumen(note.Content)</p>
+                    <div class="card__date">@note.CreacionDate.ToString("MMMM dd, yyyy")</div>
+                    <div class="card__arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="15" width="15">
+                            <path fill="#fff" d="M13.4697 17.9697C13.1768 18.2626 13.1768 18.7374 13.4697 19.0303C13.7626
+                                                19.3232 14.2374 19.3232 14.5303 19.0303L20.3232 13.2374C21.0066 12.554 
+                                                21.0066 11.446 20.3232 10.7626L14.5303 4.96967C14.2374 4.67678 13.7626 
+                                                4.67678 13.4697 4.96967C13.1768 5.26256 13.1768 5.73744 13.4697 
+                                                6.03033L18.6893 11.25H4C3.58579 11.25 3.25 11.5858 3.25 12C3.25 
+                                                12.4142 3.58579 12.75 4 12.75H18.6893L13.4697 17.9697Z"></path>
+                        </svg>
                     </div>
                 </li>
             }
         </ul>
+
+
+        <ul class="notes-list">
+            @foreach (var note in notas)
+            {
+                <li class="card" draggable="true" @ref="@(cardRef[note.Id])" @onclick="() => VerDetalles(note.Id)">
+                    <h3 class="card__title">@note.Title</h3>
+                    <p class="card__content">@MostrarResumen(note.Content)</p>
+                    <div class="card__date">@note.CreacionDate.ToString("MMMM dd, yyyy")</div>
+                    <div class="card__arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="15" width="15">
+                            <path fill="#fff" d="M13.4697 17.9697C13.1768 18.2626 13.1768 18.7374 13.4697 19.0303C13.7626
+                                        19.3232 14.2374 19.3232 14.5303 19.0303L20.3232 13.2374C21.0066 12.554
+                                        21.0066 11.446 20.3232 10.7626L14.5303 4.96967C14.2374 4.67678 13.7626
+                                        4.67678 13.4697 4.96967C13.1768 5.26256 13.1768 5.73744 13.4697
+                                        6.03033L18.6893 11.25H4C3.58579 11.25 3.25 11.5858 3.25 12C3.25
+                                        12.4142 3.58579 12.75 4 12.75H18.6893L13.4697 17.9697Z"></path>
+                        </svg>
+                    </div>
+                </li>
+            }
+        </ul>
+
     }
 </div>
-
 @code {
     private List<Notes> notas;
+    private Dictionary<int, ElementReference> cardRef = new();
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(1000);
@@ -54,13 +78,196 @@ Welcome to your new app. *@
     {
         Navigation.NavigateTo($"/edit-note/{id}");
     }
+
     private void VerDetalles(int id)
     {
         Navigation.NavigateTo($"/note-details/{id}");
     }
+
     private async Task EliminarNota(int id)
     {
         await NotesService.DeleteNoteAsync(id);
         notas = await NotesService.GetAllNotesAsync();
+    }
+    private string MostrarResumen(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return "Sin contenido...";
+
+        return content.Length > 50 ? content.Substring(0, 50) + "..." : content;
+    }
+}
+
+<script src="js/drag-notes.js"></script>
+
+ *@
+@*  @page "/"
+@using NoteList.Services
+@using NoteList.Models
+@inject NotesService NotesService
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="css/home.css">
+
+<div class="notes-container">
+    <h3 class="title">Lista de Notas</h3>
+    <button class="add-note-btn" @onclick="IrAgregarNota">➕ Agregar Nota</button>
+
+    @if (notas == null)
+    {
+        <p class="loading-text">Cargando...</p>
+    }
+    else if (!notas.Any())
+    {
+        <p class="empty-text">📌 No hay notas disponibles.</p>
+    }
+    else
+    {
+        <ul class="notes-list">
+            @foreach (var note in notas)
+            {
+                <li class="card" draggable="true" id="@($"note-{note.Id}")" @onclick="() => VerDetalles(note.Id)">
+                    <h3 class="card__title">@note.Title</h3>
+                    <p class="card__content">@MostrarResumen(note.Content)</p>
+                    <div class="card__date">@note.CreacionDate.ToString("MMMM dd, yyyy")</div>
+                    <div class="card__arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="15" width="15">
+                            <path fill="#fff" d="M13.4697 17.9697C13.1768 18.2626 13.1768 18.7374 13.4697 19.0303C13.7626
+                                        19.3232 14.2374 19.3232 14.5303 19.0303L20.3232 13.2374C21.0066 12.554
+                                        21.0066 11.446 20.3232 10.7626L14.5303 4.96967C14.2374 4.67678 13.7626
+                                        4.67678 13.4697 4.96967C13.1768 5.26256 13.1768 5.73744 13.4697
+                                        6.03033L18.6893 11.25H4C3.58579 11.25 3.25 11.5858 3.25 12C3.25
+                                        12.4142 3.58579 12.75 4 12.75H18.6893L13.4697 17.9697Z"></path>
+                        </svg>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private List<Notes> notas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        notas = await NotesService.GetAllNotesAsync();
+    }
+
+    private void IrAgregarNota()
+    {
+        Navigation.NavigateTo("/add-note");
+    }
+
+    private void EditarNota(int id)
+    {
+        Navigation.NavigateTo($"/edit-note/{id}");
+    }
+
+    private void VerDetalles(int id)
+    {
+        Navigation.NavigateTo($"/note-details/{id}");
+    }
+
+    private async Task EliminarNota(int id)
+    {
+        await NotesService.DeleteNoteAsync(id);
+        notas = await NotesService.GetAllNotesAsync();
+    }
+
+    private string MostrarResumen(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return "Sin contenido...";
+
+        return content.Length > 50 ? content.Substring(0, 50) + "..." : content;
+
+    }
+}
+
+<script src="css/drag-notes.js"></script>
+ *@
+@page "/"
+@using NoteList.Services
+@using NoteList.Models
+@inject NotesService NotesService
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="css/home.css">
+
+<div class="notes-container">
+    <h3 class="title">Lista de Notas</h3>
+    <button class="add-note-btn" @onclick="IrAgregarNota">➕ Agregar Nota</button>
+
+    @if (notas == null)
+    {
+        <p class="loading-text">Cargando...</p>
+    }
+    else if (!notas.Any())
+    {
+        <p class="empty-text">📌 No hay notas disponibles.</p>
+    }
+    else
+    {
+        <ul class="notes-list" id="notesList">
+            @foreach (var note in notas)
+            {
+                <li class="card" draggable="true" id="note-@note.Id" @onclick="() => VerDetalles(note.Id)">
+                    <h3 class="card__title">@note.Title</h3>
+                    <p class="card__content">@MostrarResumen(note.Content)</p>
+                    <div class="card__date">@note.CreacionDate.ToString("MMMM dd, yyyy")</div>
+                    <div class="card__arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="15" width="15">
+                            <path fill="#fff" d="M13.4697 17.9697C13.1768 18.2626 13.1768 18.7374 13.4697 19.0303C13.7626
+                                        19.3232 14.2374 19.3232 14.5303 19.0303L20.3232 13.2374C21.0066 12.554
+                                        21.0066 11.446 20.3232 10.7626L14.5303 4.96967C14.2374 4.67678 13.7626
+                                        4.67678 13.4697 4.96967C13.1768 5.26256 13.1768 5.73744 13.4697
+                                        6.03033L18.6893 11.25H4C3.58579 11.25 3.25 11.5858 3.25 12C3.25
+                                        12.4142 3.58579 12.75 4 12.75H18.6893L13.4697 17.9697Z"></path>
+                        </svg>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private List<Notes> notas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        notas = await NotesService.GetAllNotesAsync();
+    }
+
+    private void IrAgregarNota()
+    {
+        Navigation.NavigateTo("/add-note");
+    }
+
+    private void EditarNota(int id)
+    {
+        Navigation.NavigateTo($"/edit-note/{id}");
+    }
+
+    private void VerDetalles(int id)
+    {
+        Navigation.NavigateTo($"/note-details/{id}");
+    }
+
+    private async Task EliminarNota(int id)
+    {
+        await NotesService.DeleteNoteAsync(id);
+        notas = await NotesService.GetAllNotesAsync();
+    }
+
+    private string MostrarResumen(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return "Sin contenido...";
+
+        return content.Length > 50 ? content.Substring(0, 50) + "..." : content;
     }
 }

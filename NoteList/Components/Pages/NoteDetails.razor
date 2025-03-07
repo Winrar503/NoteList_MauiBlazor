@@ -1,0 +1,38 @@
+﻿@page "/note-details/{id:int}"
+@using NoteList.Services
+@using NoteList.Models
+@inject NotesService NotesService
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="css/details.css">
+
+@if (nota == null)
+{
+    <p class="loading-text">Cargando...</p>
+}
+else
+{
+    <div class="note-details-container">
+        <h2 class="note-title">@nota.Title</h2>
+        <p class="note-date">📅 Creado el: @nota.CreacionDate.ToString("MMMM dd, yyyy")</p>
+        <div class="note-content">
+            <p>@nota.Content</p>
+        </div>
+        <button class="back-btn" @onclick="Volver">⬅ Volver</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+    private Notes nota;
+
+    protected override async Task OnInitializedAsync()
+    {
+        nota = await NotesService.GetNoteByIdAsync(id);
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
